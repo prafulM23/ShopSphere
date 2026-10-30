@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Heart, ShoppingBag, Star } from 'lucide-react'
 import api from '../services/api'
-
+import { Link } from 'react-router-dom'
 const FeaturedProducts = () => {
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
@@ -77,18 +77,20 @@ const FeaturedProducts = () => {
                             return (
                                 <article key={product.id} className="group">
                                     <div className="relative overflow-hidden bg-[#F4F0E9]">
-                                        {image ? (
-                                            <img
-                                                src={image}
-                                                alt={product.name}
-                                                loading="lazy"
-                                                className="h-56 w-full object-cover transition duration-500 group-hover:scale-105 sm:h-80"
-                                            />
-                                        ) : (
-                                            <div className="flex h-56 items-center justify-center text-sm text-stone-400 sm:h-80">
-                                                No image available
-                                            </div>
-                                        )}
+                                        <Link to={`/products/${product.id}`}>
+                                            {image ? (
+                                                <img
+                                                    src={image}
+                                                    alt={product.name}
+                                                    loading="lazy"
+                                                    className="h-56 w-full object-cover transition duration-500 group-hover:scale-105 sm:h-80"
+                                                />
+                                            ) : (
+                                                <div className="flex h-56 items-center justify-center text-sm text-stone-400 sm:h-80">
+                                                    No image available
+                                                </div>
+                                            )}
+                                        </Link>
 
                                         <button
                                             type="button"
@@ -108,29 +110,31 @@ const FeaturedProducts = () => {
                                     </div>
 
                                     <div className="pt-4">
-                                        <p className="text-[10px] tracking-[0.16em] text-stone-500">
-                                            {typeof product.category === 'string'
-                                                ? product.category
-                                                : product.category?.name ?? 'COLLECTION'}
-                                        </p>
-
-                                        <h3 className="mt-2 font-serif text-lg text-stone-900">
-                                            {product.name}
-                                        </h3>
-
-                                        <div className="mt-2 flex items-center justify-between gap-2">
-                                            <p className="text-sm font-medium">
-                                                ₹{Number(product.price ?? 0).toLocaleString('en-IN')}
+                                        <Link to={`/products/${product.id}`} className="block">
+                                            <p className="text-[10px] tracking-[0.16em] text-stone-500">
+                                                {typeof product.category === 'string'
+                                                    ? product.category
+                                                    : product.category?.name ?? 'COLLECTION'}
                                             </p>
 
-                                            <span className="flex items-center gap-1 text-xs text-stone-600">
-                                                <Star
-                                                    size={13}
-                                                    className="fill-[#B28A50] text-[#B28A50]"
-                                                />
-                                                {product.rating ?? 'New'}
-                                            </span>
-                                        </div>
+                                            <h3 className="mt-2 font-serif text-lg text-stone-900 hover:text-[#9A7747]">
+                                                {product.name}
+                                            </h3>
+
+                                            <div className="mt-2 flex items-center justify-between gap-2">
+                                                <p className="text-sm font-medium">
+                                                    ₹{Number(product.price ?? 0).toLocaleString('en-IN')}
+                                                </p>
+
+                                                <span className="flex items-center gap-1 text-xs text-stone-600">
+                                                    <Star
+                                                        size={13}
+                                                        className="fill-[#B28A50] text-[#B28A50]"
+                                                    />
+                                                    {product.rating ?? 'New'}
+                                                </span>
+                                            </div>
+                                        </Link>
                                     </div>
                                 </article>
                             )

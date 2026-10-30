@@ -1,10 +1,15 @@
-import Home from "./pages/Home.jsx"
 
+import { Routes, Route } from 'react-router-dom'
+import Home from './pages/Home'
+import ProductDetails from './pages/ProductDetails'
 
 function App() {
-  return <>
-    <Home />
-  </>
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/products/:id" element={<ProductDetails />} />
+    </Routes>
+  )
 }
 
 export default App
