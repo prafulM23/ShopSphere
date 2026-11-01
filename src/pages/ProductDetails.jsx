@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ShoppingBag, ArrowLeft, Minus, Plus } from 'lucide-react'
+import { useCart } from '../context/CartContext'
 import api from '../services/api'
 
 const ProductDetails = () => {
@@ -11,7 +12,7 @@ const ProductDetails = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [quantity, setQuantity] = useState(1)
-
+    const { addToCart } = useCart()
     useEffect(() => {
         const fetchProduct = async () => {
             try {
@@ -162,6 +163,7 @@ const ProductDetails = () => {
 
                         <button
                             type="button"
+                            onClick={() => addToCart(product, quantity)}
                             className="mt-7 flex w-full items-center justify-center gap-3 bg-stone-900 px-6 py-4 text-xs font-medium uppercase tracking-[0.15em] text-white transition hover:bg-[#9A7747]"
                         >
                             <ShoppingBag size={17} />
