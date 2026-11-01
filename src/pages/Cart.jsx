@@ -1,17 +1,35 @@
 
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react'
+import {
+    Minus,
+    Plus,
+    Trash2,
+    ShoppingBag,
+    ArrowLeft,
+} from 'lucide-react'
+
 import { useCart } from '../context/CartContext'
 
 const Cart = () => {
-    const { cartItems, cartCount, cartTotal, removeFromCart, updateQuantity } = useCart()
+    const {
+        cartItems,
+        cartCount,
+        cartTotal,
+        cartLoading,
+        cartError,
+        removeFromCart,
+        updateQuantity,
+    } = useCart()
+
+    const [actionError, setActionError] = useState('')
 
     const getProductImage = (product) => {
         return (
-            product.imageUrl ??
-            product.imageURL ??
-            product.image ??
-            (Array.isArray(product.images)
+            product?.imageUrl ??
+            product?.imageURL ??
+            product?.image ??
+            (Array.isArray(product?.images)
                 ? product.images[0]?.imageUrl ??
                 product.images[0]?.url ??
                 product.images[0]
@@ -19,10 +37,61 @@ const Cart = () => {
         )
     }
 
+    const handleQuantityUpdate = async (itemId, quantity) => {
+        try {
+            setActionError('')
+            await updateQuantity(itemId, quantity)
+        } catch (error) {
+            setActionError(
+                error.response?.data?.message || 'Unable to update quantity.'
+            )
+        }
+    }
+
+    const handleRemove = async (itemId) => {
+        try {
+            setActionError('')
+            await removeFromCart(itemId)
+        } catch (error) {
+            setActionError(
+                error.response?.data?.message || 'Unable to remove item.'
+            )
+        }
+    }
+
+    if (cartLoading && cartItems.length === 0) {
+        return (
+            <main className="flex min-h-[70vh] items-center justify-center bg-[#F5F0E8]">
+                <p className="text-sm text-stone-600">
+                    Loading your shopping bag...
+                </p>
+            </main>
+        )
+    }
+
+    if (cartError && cartItems.length === 0) {
+        return (
+            <main className="flex min-h-[70vh] flex-col items-center justify-center bg-[#F5F0E8] px-5 text-center">
+                <p className="text-sm text-red-600">{cartError}</p>
+
+                <Link
+                    to="/"
+                    className="mt-6 bg-stone-900 px-8 py-4 text-xs uppercase tracking-widest text-white"
+                >
+                    Continue Shopping
+                </Link>
+            </main>
+        )
+    }
+
     if (cartItems.length === 0) {
         return (
             <main className="flex min-h-[70vh] flex-col items-center justify-center bg-[#F5F0E8] px-5 text-center">
-                <ShoppingBag size={48} strokeWidth={1} className="text-stone-500" />
+                <ShoppingBag
+                    size={48}
+                    strokeWidth={1}
+                    className="text-stone-500"
+                />
 
                 <h1 className="mt-6 font-serif text-4xl text-stone-900">
                     Your bag is empty
@@ -45,7 +114,6 @@ const Cart = () => {
     return (
         <main className="min-h-screen bg-[#F5F0E8] px-5 py-12 lg:px-10">
             <div className="mx-auto max-w-7xl">
-
                 <Link
                     to="/"
                     className="mb-8 inline-flex items-center gap-2 text-sm text-stone-600 hover:text-[#9A7747]"
@@ -68,11 +136,17 @@ const Cart = () => {
                     </p>
                 </div>
 
-                <div className="grid gap-10 lg:grid-cols-[1fr_350px]">
+                {actionError && (
+                    <p className="mb-5 text-sm text-red-600" role="alert">
+                        {actionError}
+                    </p>
+                )}
 
+                <div className="grid gap-10 lg:grid-cols-[1fr_350px]">
                     <div className="space-y-6">
                         {cartItems.map((item) => {
-                            const image = getProductImage(item)
+                            const product = item.product
+                            const image = getProductImage(product)
 
                             return (
                                 <article
@@ -80,13 +154,13 @@ const Cart = () => {
                                     className="flex gap-4 border-b border-stone-300 pb-6 sm:gap-6"
                                 >
                                     <Link
-                                        to={`/products/${item.id}`}
+                                        to={`/products/${product.id}`}
                                         className="h-32 w-28 shrink-0 overflow-hidden bg-[#EAE4DA] sm:h-40 sm:w-36"
                                     >
                                         {image ? (
                                             <img
                                                 src={image}
-                                                alt={item.name}
+                                                alt={product.name}
                                                 className="h-full w-full object-cover"
                                             />
                                         ) : (
@@ -99,14 +173,14 @@ const Cart = () => {
                                     <div className="flex min-w-0 flex-1 flex-col justify-between">
                                         <div>
                                             <Link
-                                                to={`/products/${item.id}`}
+                                                to={`/products/${product.id}`}
                                                 className="font-serif text-lg text-stone-900 hover:text-[#9A7747]"
                                             >
-                                                {item.name}
+                                                {product.name}
                                             </Link>
 
                                             <p className="mt-2 text-sm font-medium text-stone-700">
-                                                ₹{Number(item.price ?? 0).toLocaleString('en-IN')}
+                                                ₹{Number(product.price ?? 0).toLocaleString('en-IN')}
                                             </p>
                                         </div>
 
@@ -114,8 +188,14 @@ const Cart = () => {
                                             <div className="flex items-center border border-stone-400">
                                                 <button
                                                     type="button"
-                                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                                    className="p-2 hover:bg-stone-200"
+                                                    disabled={item.quantity <= 1 || cartLoading}
+                                                    onClick={() =>
+                                                        handleQuantityUpdate(
+                                                            item.id,
+                                                            item.quantity - 1
+                                                        )
+                                                    }
+                                                    className="p-2 hover:bg-stone-200 disabled:cursor-not-allowed disabled:opacity-40"
                                                     aria-label="Decrease quantity"
                                                 >
                                                     <Minus size={14} />
@@ -127,8 +207,14 @@ const Cart = () => {
 
                                                 <button
                                                     type="button"
-                                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                    className="p-2 hover:bg-stone-200"
+                                                    disabled={cartLoading}
+                                                    onClick={() =>
+                                                        handleQuantityUpdate(
+                                                            item.id,
+                                                            item.quantity + 1
+                                                        )
+                                                    }
+                                                    className="p-2 hover:bg-stone-200 disabled:opacity-40"
                                                     aria-label="Increase quantity"
                                                 >
                                                     <Plus size={14} />
@@ -137,8 +223,9 @@ const Cart = () => {
 
                                             <button
                                                 type="button"
-                                                onClick={() => removeFromCart(item.id)}
-                                                className="flex items-center gap-1 text-xs text-stone-500 transition hover:text-red-600"
+                                                disabled={cartLoading}
+                                                onClick={() => handleRemove(item.id)}
+                                                className="flex items-center gap-1 text-xs text-stone-500 transition hover:text-red-600 disabled:opacity-40"
                                             >
                                                 <Trash2 size={14} />
                                                 Remove
@@ -147,7 +234,10 @@ const Cart = () => {
                                     </div>
 
                                     <p className="hidden text-sm font-medium text-stone-900 sm:block">
-                                        ₹{(Number(item.price ?? 0) * item.quantity).toLocaleString('en-IN')}
+                                        ₹{(
+                                            Number(product.price ?? 0) *
+                                            item.quantity
+                                        ).toLocaleString('en-IN')}
                                     </p>
                                 </article>
                             )
@@ -161,12 +251,16 @@ const Cart = () => {
 
                         <div className="mt-6 flex justify-between text-sm text-stone-600">
                             <span>Items ({cartCount})</span>
-                            <span>₹{cartTotal.toLocaleString('en-IN')}</span>
+                            <span>
+                                ₹{cartTotal.toLocaleString('en-IN')}
+                            </span>
                         </div>
 
                         <div className="mt-4 flex justify-between border-t border-stone-200 pt-4 text-base font-medium text-stone-900">
                             <span>Subtotal</span>
-                            <span>₹{cartTotal.toLocaleString('en-IN')}</span>
+                            <span>
+                                ₹{cartTotal.toLocaleString('en-IN')}
+                            </span>
                         </div>
 
                         <p className="mt-3 text-xs text-stone-500">
@@ -181,7 +275,6 @@ const Cart = () => {
                             Checkout — Coming Soon
                         </button>
                     </aside>
-
                 </div>
             </div>
         </main>

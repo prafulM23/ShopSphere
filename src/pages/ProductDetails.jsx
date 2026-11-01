@@ -1,18 +1,31 @@
 
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { ShoppingBag, ArrowLeft, Minus, Plus } from 'lucide-react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import {
+    ShoppingBag,
+    ArrowLeft,
+    Minus,
+    Plus,
+} from 'lucide-react'
+
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
 
 const ProductDetails = () => {
     const { id } = useParams()
+    const navigate = useNavigate()
+
+    const { addToCart } = useCart()
+    const { isAuthenticated } = useAuth()
 
     const [product, setProduct] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [quantity, setQuantity] = useState(1)
-    const { addToCart } = useCart()
+    const [addingToCart, setAddingToCart] = useState(false)
+    const [cartMessage, setCartMessage] = useState('')
+
     useEffect(() => {
         const fetchProduct = async () => {
             try {
@@ -43,6 +56,32 @@ const ProductDetails = () => {
         fetchProduct()
     }, [id])
 
+    const handleAddToCart = async () => {
+        if (!isAuthenticated) {
+            navigate('/login', {
+                state: { from: `/products/${id}` },
+            })
+            return
+        }
+
+        try {
+            setAddingToCart(true)
+            setCartMessage('')
+            setError('')
+
+            await addToCart(product, quantity)
+
+            setCartMessage('Product successfully added to your bag.')
+        } catch (err) {
+            setError(
+                err.response?.data?.message ||
+                'Unable to add product to your bag.'
+            )
+        } finally {
+            setAddingToCart(false)
+        }
+    }
+
     if (loading) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-[#F5F0E8]">
@@ -51,18 +90,18 @@ const ProductDetails = () => {
         )
     }
 
-    if (error || !product) {
+    if (error && !product) {
         return (
             <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#F5F0E8]">
-                <p className="text-stone-600">
-                    {error || 'Product not found.'}
-                </p>
+                <p className="text-stone-600">{error}</p>
                 <Link to="/" className="text-sm underline">
                     Back to Home
                 </Link>
             </div>
         )
     }
+
+    if (!product) return null
 
     const image =
         product.imageUrl ??
@@ -82,7 +121,6 @@ const ProductDetails = () => {
     return (
         <main className="min-h-screen bg-[#F5F0E8] px-5 py-10 lg:px-10">
             <div className="mx-auto max-w-7xl">
-
                 <Link
                     to="/"
                     className="mb-8 inline-flex items-center gap-2 text-sm text-stone-600 transition hover:text-[#9A7747]"
@@ -92,7 +130,6 @@ const ProductDetails = () => {
                 </Link>
 
                 <div className="grid gap-10 md:grid-cols-2 lg:gap-16">
-
                     <div className="bg-[#EAE4DA]">
                         {image ? (
                             <img
@@ -108,7 +145,6 @@ const ProductDetails = () => {
                     </div>
 
                     <div className="flex flex-col justify-center py-4">
-
                         <p className="text-xs uppercase tracking-[0.22em] text-[#9A7747]">
                             {category}
                         </p>
@@ -128,7 +164,8 @@ const ProductDetails = () => {
                         </h2>
 
                         <p className="mt-3 text-sm leading-7 text-stone-600">
-                            {product.description || 'No description available for this product.'}
+                            {product.description ||
+                                'No description available for this product.'}
                         </p>
 
                         <div className="my-8 border-t border-stone-300" />
@@ -140,7 +177,9 @@ const ProductDetails = () => {
                         <div className="flex w-fit items-center border border-stone-400">
                             <button
                                 type="button"
-                                onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                                onClick={() =>
+                                    setQuantity((prev) => Math.max(1, prev - 1))
+                                }
                                 className="p-3 transition hover:bg-stone-200"
                                 aria-label="Decrease quantity"
                             >
@@ -163,17 +202,29 @@ const ProductDetails = () => {
 
                         <button
                             type="button"
-                            onClick={() => addToCart(product, quantity)}
-                            className="mt-7 flex w-full items-center justify-center gap-3 bg-stone-900 px-6 py-4 text-xs font-medium uppercase tracking-[0.15em] text-white transition hover:bg-[#9A7747]"
+                            onClick={handleAddToCart}
+                            disabled={addingToCart}
+                            className="mt-7 flex w-full items-center justify-center gap-3 bg-stone-900 px-6 py-4 text-xs font-medium uppercase tracking-[0.15em] text-white transition hover:bg-[#9A7747] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             <ShoppingBag size={17} />
-                            Add to Bag
+                            {addingToCart ? 'Adding...' : 'Add to Bag'}
                         </button>
+
+                        {cartMessage && (
+                            <p className="mt-4 text-sm text-green-700" role="status">
+                                {cartMessage}
+                            </p>
+                        )}
+
+                        {error && (
+                            <p className="mt-4 text-sm text-red-600" role="alert">
+                                {error}
+                            </p>
+                        )}
 
                         <p className="mt-4 text-xs text-stone-500">
                             Quantity selected: {quantity}
                         </p>
-
                     </div>
                 </div>
             </div>
