@@ -13,12 +13,16 @@ import {
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import { useWishlist } from '../context/WishlistContext'
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isAccountOpen, setIsAccountOpen] = useState(false)
+
     const { cartCount } = useCart()
     const { user, isAuthenticated, logout } = useAuth()
+    const { wishlistCount } = useWishlist()
+
     const navigate = useNavigate()
 
     const navLinks = [
@@ -31,7 +35,14 @@ const Header = () => {
     const handleLogout = () => {
         logout()
         setIsMenuOpen(false)
+        setIsAccountOpen(false)
         navigate('/')
+    }
+
+    const handleWishlist = () => {
+        setIsMenuOpen(false)
+        setIsAccountOpen(false)
+        navigate(isAuthenticated ? '/wishlist' : '/login')
     }
 
     return (
@@ -96,10 +107,7 @@ const Header = () => {
                                     <div className="my-3 border-t border-stone-200" />
 
                                     <button
-                                        onClick={() => {
-                                            setIsAccountOpen(false)
-                                            handleLogout()
-                                        }}
+                                        onClick={handleLogout}
                                         className="flex w-full items-center gap-2 text-sm text-red-700 hover:text-red-900"
                                     >
                                         <LogOut size={16} />
@@ -118,8 +126,20 @@ const Header = () => {
                         </Link>
                     )}
 
-                    <button aria-label="Wishlist" className="hidden sm:block">
+                    {/* Desktop Wishlist */}
+                    <button
+                        type="button"
+                        onClick={handleWishlist}
+                        aria-label="Wishlist"
+                        className="relative hidden sm:block"
+                    >
                         <Heart size={20} strokeWidth={1.5} />
+
+                        {wishlistCount > 0 && (
+                            <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#9A7747] px-1 text-[10px] text-white">
+                                {wishlistCount}
+                            </span>
+                        )}
                     </button>
 
                     <Link
@@ -162,6 +182,24 @@ const Header = () => {
                                 {link.name}
                             </a>
                         ))}
+
+                        {/* Mobile Wishlist */}
+                        <button
+                            type="button"
+                            onClick={handleWishlist}
+                            className="flex items-center justify-between border-b border-stone-200 py-4 text-left text-sm"
+                        >
+                            <span className="flex items-center gap-2">
+                                <Heart size={17} />
+                                Wishlist
+                            </span>
+
+                            {wishlistCount > 0 && (
+                                <span className="rounded-full bg-[#9A7747] px-2 py-1 text-xs text-white">
+                                    {wishlistCount}
+                                </span>
+                            )}
+                        </button>
 
                         <div className="mt-3 border-t border-stone-200 pt-4">
                             {isAuthenticated ? (

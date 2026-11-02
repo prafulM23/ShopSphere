@@ -1,12 +1,24 @@
 
 import { useEffect, useState } from 'react'
 import { Heart, ShoppingBag, Star } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
-import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
+import { useWishlist } from '../context/WishlistContext'
+
 const FeaturedProducts = () => {
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [wishlistAction, setWishlistAction] = useState(null)
+    const [cartAction, setCartAction] = useState(null)
+    const [actionMessage, setActionMessage] = useState('')
+
+    const navigate = useNavigate()
+    const { isAuthenticated } = useAuth()
+    const { addToCart } = useCart()
+    const { isWishlisted, toggleWishlist } = useWishlist()
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -36,6 +48,63 @@ const FeaturedProducts = () => {
         fetchProducts()
     }, [])
 
+    const handleWishlist = async (product) => {
+        if (!isAuthenticated) {
+            navigate('/login', {
+                state: { from: `/products/${product.id}` },
+            })
+            return
+        }
+
+        if (wishlistAction === product.id) return
+
+        setWishlistAction(product.id)
+        setActionMessage('')
+
+        try {
+            await toggleWishlist(product.id)
+
+            setActionMessage(
+                isWishlisted(product.id)
+                    ? 'Product removed from wishlist.'
+                    : 'Product added to wishlist.'
+            )
+        } catch (err) {
+            console.error('Wishlist error:', err)
+            setActionMessage(
+                err.response?.data?.message || 'Wishlist update nahi ho paayi.'
+            )
+        } finally {
+            setWishlistAction(null)
+        }
+    }
+
+    const handleAddToCart = async (product) => {
+        if (!isAuthenticated) {
+            navigate('/login', {
+                state: { from: `/products/${product.id}` },
+            })
+            return
+        }
+
+        if (cartAction === product.id) return
+
+        setCartAction(product.id)
+        setActionMessage('')
+
+        try {
+            await addToCart(product, 1)
+            setActionMessage(`${product.name} added to your bag.`)
+        } catch (err) {
+            console.error('Add to cart error:', err)
+            setActionMessage(
+                err.response?.data?.message || 'Product bag mein add nahi hua.'
+            )
+        } finally {
+            setCartAction(null)
+        }
+    }
+
     return (
         <section id="products" className="bg-white px-5 py-20 lg:px-10">
             <div className="mx-auto max-w-7xl">
@@ -50,6 +119,15 @@ const FeaturedProducts = () => {
                         Pieces worth keeping, styles worth returning to.
                     </p>
                 </div>
+
+                {actionMessage && (
+                    <p
+                        role="status"
+                        className="mb-5 text-sm text-[#9A7747]"
+                    >
+                        {actionMessage}
+                    </p>
+                )}
 
                 {loading ? (
                     <p className="py-12 text-center text-stone-500">
@@ -74,6 +152,8 @@ const FeaturedProducts = () => {
                                     product.images[0]
                                     : '')
 
+                            const wishlisted = isWishlisted(product.id)
+
                             return (
                                 <article key={product.id} className="group">
                                     <div className="relative overflow-hidden bg-[#F4F0E9]">
@@ -94,23 +174,45 @@ const FeaturedProducts = () => {
 
                                         <button
                                             type="button"
-                                            aria-label={`Add ${product.name} to wishlist`}
-                                            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90"
+                                            onClick={() => handleWishlist(product)}
+                                            disabled={wishlistAction === product.id}
+                                            aria-label={
+                                                wishlisted
+                                                    ? `Remove ${product.name} from wishlist`
+                                                    : `Add ${product.name} to wishlist`
+                                            }
+                                            aria-pressed={wishlisted}
+                                            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 disabled:opacity-50"
                                         >
-                                            <Heart size={17} strokeWidth={1.5} />
+                                            <Heart
+                                                size={17}
+                                                strokeWidth={1.5}
+                                                className={
+                                                    wishlisted
+                                                        ? 'fill-red-500 text-red-500'
+                                                        : 'text-stone-800'
+                                                }
+                                            />
                                         </button>
 
                                         <button
                                             type="button"
-                                            className="absolute bottom-3 left-3 right-3 flex items-center justify-center gap-2 bg-stone-900 py-3 text-xs font-medium text-white transition hover:bg-[#A58150]"
+                                            onClick={() => handleAddToCart(product)}
+                                            disabled={cartAction === product.id}
+                                            className="absolute bottom-3 left-3 right-3 flex items-center justify-center gap-2 bg-stone-900 py-3 text-xs font-medium text-white transition hover:bg-[#A58150] disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             <ShoppingBag size={15} />
-                                            Add to Bag
+                                            {cartAction === product.id
+                                                ? 'Adding...'
+                                                : 'Add to Bag'}
                                         </button>
                                     </div>
 
                                     <div className="pt-4">
-                                        <Link to={`/products/${product.id}`} className="block">
+                                        <Link
+                                            to={`/products/${product.id}`}
+                                            className="block"
+                                        >
                                             <p className="text-[10px] tracking-[0.16em] text-stone-500">
                                                 {typeof product.category === 'string'
                                                     ? product.category

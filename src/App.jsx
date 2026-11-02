@@ -1,3 +1,4 @@
+
 import { Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import ProductDetails from './pages/ProductDetails'
@@ -6,13 +7,13 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import ProtectedRoute from './components/ProtectedRoute'
 import ForgotPassword from './pages/ForgotPassword'
+import Wishlist from './pages/Wishlist'
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/products/:id" element={<ProductDetails />} />
-
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -22,6 +23,15 @@ function App() {
         element={
           <ProtectedRoute>
             <Cart />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/wishlist"
+        element={
+          <ProtectedRoute>
+            <Wishlist />
           </ProtectedRoute>
         }
       />

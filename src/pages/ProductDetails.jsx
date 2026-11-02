@@ -6,10 +6,12 @@ import {
     ArrowLeft,
     Minus,
     Plus,
+    Heart,
 } from 'lucide-react'
 
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import { useWishlist } from '../context/WishlistContext'
 import api from '../services/api'
 
 const ProductDetails = () => {
@@ -18,6 +20,7 @@ const ProductDetails = () => {
 
     const { addToCart } = useCart()
     const { isAuthenticated } = useAuth()
+    const { isWishlisted, toggleWishlist } = useWishlist()
 
     const [product, setProduct] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -25,6 +28,8 @@ const ProductDetails = () => {
     const [quantity, setQuantity] = useState(1)
     const [addingToCart, setAddingToCart] = useState(false)
     const [cartMessage, setCartMessage] = useState('')
+    const [wishlistLoading, setWishlistLoading] = useState(false)
+    const [wishlistMessage, setWishlistMessage] = useState('')
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -82,6 +87,39 @@ const ProductDetails = () => {
         }
     }
 
+    const handleWishlist = async () => {
+        if (!isAuthenticated) {
+            navigate('/login', {
+                state: { from: `/products/${id}` },
+            })
+            return
+        }
+
+        if (wishlistLoading) return
+
+        const wasWishlisted = isWishlisted(product.id)
+
+        try {
+            setWishlistLoading(true)
+            setWishlistMessage('')
+
+            await toggleWishlist(product.id)
+
+            setWishlistMessage(
+                wasWishlisted
+                    ? 'Product removed from your wishlist.'
+                    : 'Product added to your wishlist.'
+            )
+        } catch (err) {
+            setWishlistMessage(
+                err.response?.data?.message ||
+                'Unable to update your wishlist.'
+            )
+        } finally {
+            setWishlistLoading(false)
+        }
+    }
+
     if (loading) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-[#F5F0E8]">
@@ -102,6 +140,8 @@ const ProductDetails = () => {
     }
 
     if (!product) return null
+
+    const wishlisted = isWishlisted(product.id)
 
     const image =
         product.imageUrl ??
@@ -130,7 +170,7 @@ const ProductDetails = () => {
                 </Link>
 
                 <div className="grid gap-10 md:grid-cols-2 lg:gap-16">
-                    <div className="bg-[#EAE4DA]">
+                    <div className="relative bg-[#EAE4DA]">
                         {image ? (
                             <img
                                 src={image}
@@ -142,6 +182,29 @@ const ProductDetails = () => {
                                 No image available
                             </div>
                         )}
+
+                        <button
+                            type="button"
+                            onClick={handleWishlist}
+                            disabled={wishlistLoading}
+                            aria-label={
+                                wishlisted
+                                    ? 'Remove from wishlist'
+                                    : 'Add to wishlist'
+                            }
+                            aria-pressed={wishlisted}
+                            className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-md transition hover:scale-105 disabled:opacity-50"
+                        >
+                            <Heart
+                                size={21}
+                                strokeWidth={1.5}
+                                className={
+                                    wishlisted
+                                        ? 'fill-red-500 text-red-500'
+                                        : 'text-stone-800'
+                                }
+                            />
+                        </button>
                     </div>
 
                     <div className="flex flex-col justify-center py-4">
@@ -219,6 +282,12 @@ const ProductDetails = () => {
                         {error && (
                             <p className="mt-4 text-sm text-red-600" role="alert">
                                 {error}
+                            </p>
+                        )}
+
+                        {wishlistMessage && (
+                            <p className="mt-3 text-sm text-[#9A7747]" role="status">
+                                {wishlistMessage}
                             </p>
                         )}
 
