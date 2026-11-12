@@ -28,7 +28,7 @@ const Header = () => {
     const navLinks = [
         { name: 'Home', href: '/' },
         { name: 'Collections', href: '#categories' },
-        { name: 'Shop All', href: '#products' },
+        { name: 'Shop All', href: '/products' },
         { name: 'Our Story', href: '#about' },
     ]
 
@@ -58,14 +58,24 @@ const Header = () => {
 
                 <nav className="hidden items-center gap-8 text-sm font-medium md:flex">
                     {navLinks.map((link, index) => (
-                        <a
-                            key={link.name}
-                            href={link.href}
-                            className={`transition hover:text-[#B28A50] ${index === 0 ? 'text-[#B28A50]' : ''
-                                }`}
-                        >
-                            {link.name}
-                        </a>
+                        link.href.startsWith('#') ? (
+                            <a
+                                key={link.name}
+                                href={link.href}
+                                className="transition hover:text-[#B28A50]"
+                            >
+                                {link.name}
+                            </a>
+                        ) : (
+                            <Link
+                                key={link.name}
+                                to={link.href}
+                                className={`transition hover:text-[#B28A50] ${index === 0 ? 'text-[#B28A50]' : ''
+                                    }`}
+                            >
+                                {link.name}
+                            </Link>
+                        )
                     ))}
                 </nav>
 
@@ -173,14 +183,25 @@ const Header = () => {
                     <div className="mx-auto flex max-w-7xl flex-col">
 
                         {navLinks.map((link) => (
-                            <a
-                                key={link.name}
-                                href={link.href}
-                                onClick={() => setIsMenuOpen(false)}
-                                className="border-b border-stone-200 py-4 text-sm transition hover:text-[#B28A50] last:border-b-0"
-                            >
-                                {link.name}
-                            </a>
+                            link.href.startsWith('#') ? (
+                                <a
+                                    key={link.name}
+                                    href={link.href}
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="border-b border-stone-200 py-4 text-sm transition hover:text-[#B28A50] last:border-b-0"
+                                >
+                                    {link.name}
+                                </a>
+                            ) : (
+                                <Link
+                                    key={link.name}
+                                    to={link.href}
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="border-b border-stone-200 py-4 text-sm transition hover:text-[#B28A50] last:border-b-0"
+                                >
+                                    {link.name}
+                                </Link>
+                            )
                         ))}
 
                         {/* Mobile Wishlist */}

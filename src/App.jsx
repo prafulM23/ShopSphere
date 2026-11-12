@@ -8,6 +8,7 @@ import Signup from './pages/Signup'
 import ProtectedRoute from './components/ProtectedRoute'
 import ForgotPassword from './pages/ForgotPassword'
 import Wishlist from './pages/Wishlist'
+import Products from './pages/Products'
 
 function App() {
   return (
@@ -17,7 +18,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-
+      <Route path="/products" element={<Products />} />
       <Route
         path="/cart"
         element={
