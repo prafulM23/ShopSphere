@@ -14,7 +14,6 @@ const FeaturedProducts = () => {
     const [wishlistAction, setWishlistAction] = useState(null)
     const [cartAction, setCartAction] = useState(null)
     const [actionMessage, setActionMessage] = useState('')
-
     const navigate = useNavigate()
     const { isAuthenticated } = useAuth()
     const { addToCart } = useCart()
